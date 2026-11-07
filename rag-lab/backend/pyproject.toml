@@ -1,0 +1,32 @@
+[project]
+name = "rag-lab"
+version = "1.0.0"
+description = "Side-by-side workbench for testing RAG pipelines"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = [
+  "E501",    # long lines are allowed where they read better (formatter-free codebase)
+  "SIM105",  # try/except/pass is clearer than contextlib.suppress in a few hot paths
+  "B905",    # zip() without strict= is intentional for equal-length lists
+  "UP045",   # keep Optional[...] in pydantic models for readability
+  "UP007",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B", "SIM"]
+"app/components/**/__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]

@@ -1,0 +1,4 @@
+# Optional vector-database clients. Install only the ones you use; the app reports any that are missing.
+faiss-cpu>=1.8          # VECTOR_STORE=faiss
+psycopg[binary]>=3.1    # VECTOR_STORE=pgvector
+pinecone>=5             # VECTOR_STORE=pinecone
