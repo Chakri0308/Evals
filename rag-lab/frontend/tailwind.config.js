@@ -8,7 +8,6 @@ export default {
     extend: {
       fontFamily: {
         sans: ['"Inter Variable"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['Georgia', '"Times New Roman"', 'serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       colors: {
@@ -21,6 +20,7 @@ export default {
         subtle: 'rgb(var(--subtle) / <alpha-value>)',
         accent: 'rgb(var(--accent) / <alpha-value>)',
         brand: 'rgb(var(--brand) / <alpha-value>)',
+        onbrand: 'rgb(var(--on-brand) / <alpha-value>)',
         navy: 'rgb(var(--navy) / <alpha-value>)',
         paneA: 'rgb(var(--pane-a) / <alpha-value>)',
         paneB: 'rgb(var(--pane-b) / <alpha-value>)',
@@ -30,14 +30,15 @@ export default {
         warn: 'rgb(var(--warn) / <alpha-value>)',
       },
       boxShadow: {
-        glow: '0 0 0 1px rgb(var(--line) / 0.9), 0 10px 40px 0 rgb(0 0 0 / 0.12)',
-        card: '0 10px 40px 0 rgb(0 0 0 / 0.10)',
+        // popovers/menus: a hairline plus a short, tight drop
+        glow: '0 0 0 1px rgb(var(--line)), 0 4px 12px -2px rgb(0 0 0 / 0.10)',
+        card: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
       },
       borderRadius: {
-        md: '4px',
-        lg: '8px',
-        xl: '16px',
-        '2xl': '20px',
+        md: '3px',
+        lg: '5px',
+        xl: '6px',
+        '2xl': '8px',
       },
       keyframes: {
         pulsering: { '0%,100%': { boxShadow: '0 0 0 0 rgb(var(--ring) / 0.55)' }, '50%': { boxShadow: '0 0 0 5px rgb(var(--ring) / 0)' } },

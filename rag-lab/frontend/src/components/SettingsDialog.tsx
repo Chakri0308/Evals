@@ -31,7 +31,7 @@ export function ModeChip() {
       <div>Vector DB: {data.settings.vector_store}</div>
       <div className="text-muted">Click to change</div>
     </div>}>
-      <button onClick={() => open(true)} className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-medium text-muted hover:border-accent/60 hover:text-fg">
+      <button onClick={() => open(true)} className="flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-[11px] font-medium text-muted hover:border-subtle/70 hover:text-fg">
         <span className={cn('h-1.5 w-1.5 rounded-full', m.tone === 'good' ? 'bg-good' : 'bg-warn')} />
         {m.text}
         <span className="text-subtle">· {llm?.label ?? data.settings.llm_provider} · {data.settings.vector_store}</span>
@@ -79,16 +79,16 @@ export function SettingsDialog() {
   return (
     <Dialog.Root open={open} onOpenChange={(v) => { setOpen(v); setMsg(null); setPing(null) }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-[rgb(var(--overlay)/0.45)] backdrop-blur-[2px]" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[min(760px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
-          <div className="flex items-center gap-2 border-b border-line bg-brand px-5 py-3.5 text-white">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-[rgb(var(--overlay)/0.4)]" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[min(760px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-glow">
+          <div className="flex items-center gap-2 border-b border-line px-5 py-3">
             <Dialog.Title className="text-[15px] font-semibold tracking-tight">Models, vector DB &amp; access</Dialog.Title>
-            <Badge className="ml-1 border-white/40 bg-white/15 text-white">{MODE_LABEL[caps.mode].text}</Badge>
+            <Badge className="ml-1">{MODE_LABEL[caps.mode].text}</Badge>
             <div className="ml-auto flex items-center gap-1">
-              <Button size="sm" variant="ghost" className="text-white hover:bg-white/15" onClick={() => refreshAll(true)}>
+              <Button size="sm" variant="ghost" onClick={() => refreshAll(true)}>
                 {isFetching ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}Re-check connections
               </Button>
-              <Dialog.Close className="rounded-full p-1 hover:bg-white/15" aria-label="Close"><X className="h-4 w-4" /></Dialog.Close>
+              <Dialog.Close className="rounded-md p-1 text-muted hover:bg-elevated hover:text-fg" aria-label="Close"><X className="h-4 w-4" /></Dialog.Close>
             </div>
           </div>
           <Dialog.Description className="sr-only">Choose the LLM, embedding model and vector database, and what this machine may call.</Dialog.Description>

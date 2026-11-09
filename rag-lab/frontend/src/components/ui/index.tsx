@@ -10,15 +10,15 @@ import { cn } from '@/lib/utils'
 
 /* ---------------------------------------------------------------- Button */
 const buttonV = cva(
-  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full text-[13px] font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-40 disabled:pointer-events-none select-none',
+  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-[13px] font-medium transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 focus-visible:ring-offset-surface disabled:opacity-40 disabled:pointer-events-none select-none',
   {
     variants: {
       variant: {
-        primary: 'bg-brand text-white shadow-[0_8px_24px_-10px_rgb(var(--brand)/0.9)] hover:brightness-110 active:brightness-95',
-        onBrand: 'bg-white text-brand shadow-card hover:bg-white/90',
-        secondary: 'bg-surface text-brand border border-brand/40 hover:border-brand hover:bg-brand/[0.05] dark:text-accent dark:border-accent/40',
-        ghost: 'rounded-md font-medium text-muted hover:text-fg hover:bg-elevated',
-        outline: 'border border-brand/50 text-brand hover:bg-brand/[0.06]',
+        primary: 'bg-brand text-onbrand hover:bg-brand/85 active:bg-brand',
+        onBrand: 'bg-brand text-onbrand hover:bg-brand/85',
+        secondary: 'bg-surface text-fg border border-line hover:border-subtle/70 hover:bg-elevated',
+        ghost: 'text-muted hover:text-fg hover:bg-elevated',
+        outline: 'border border-line text-fg hover:bg-elevated',
         danger: 'text-bad hover:bg-bad/10',
       },
       size: { sm: 'h-7 px-2.5 text-xs', md: 'h-8 px-3', lg: 'h-10 px-4 text-sm', icon: 'h-7 w-7 p-0', iconSm: 'h-6 w-6 p-0' },
@@ -43,7 +43,7 @@ export function Switch({ checked, onCheckedChange, className, size = 'md', ...re
       checked={checked}
       onCheckedChange={onCheckedChange}
       onClick={(e) => e.stopPropagation()}
-      className={cn('relative shrink-0 rounded-full border border-line bg-[rgb(var(--line))] transition-colors data-[state=checked]:bg-brand data-[state=checked]:border-brand disabled:cursor-not-allowed disabled:opacity-50',
+      className={cn('relative shrink-0 rounded-full border border-line bg-[rgb(var(--line))] transition-colors data-[state=checked]:bg-accent data-[state=checked]:border-accent disabled:cursor-not-allowed disabled:opacity-50',
         s ? 'h-4 w-7' : 'h-5 w-9', className)}
       {...rest}
     >
@@ -61,7 +61,7 @@ export function Slider({ value, min, max, step, onChange }: { value: number; min
       <SliderP.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-line">
         <SliderP.Range className="absolute h-full bg-accent/80" />
       </SliderP.Track>
-      <SliderP.Thumb className="block h-3.5 w-3.5 rounded-full border-2 border-accent bg-surface shadow transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50" />
+      <SliderP.Thumb className="block h-3.5 w-3.5 rounded-full border-2 border-accent bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50" />
     </SliderP.Root>
   )
 }
@@ -94,11 +94,11 @@ export function Select({ value, onChange, options, className, placeholder }: {
         <ChevronDown className="h-3 w-3 shrink-0 text-subtle" />
       </SelectP.Trigger>
       <SelectP.Portal>
-        <SelectP.Content position="popper" sideOffset={4} className="z-50 max-h-80 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-line bg-elevated shadow-glow">
+        <SelectP.Content position="popper" sideOffset={4} className="z-50 max-h-80 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-line bg-surface shadow-glow">
           <SelectP.Viewport className="p-1">
             {options.map((o) => (
               <SelectP.Item key={o.value} value={o.value}
-                className="relative flex cursor-pointer select-none flex-col rounded-md py-1.5 pl-6 pr-2 text-xs text-fg outline-none data-[highlighted]:bg-accent/15">
+                className="relative flex cursor-pointer select-none flex-col rounded-[2px] py-1.5 pl-6 pr-2 text-xs text-fg outline-none data-[highlighted]:bg-elevated">
                 <SelectP.ItemIndicator className="absolute left-1.5 top-2"><Check className="h-3 w-3 text-accent" /></SelectP.ItemIndicator>
                 <SelectP.ItemText>{o.label}</SelectP.ItemText>
                 {o.hint && <span className="mt-0.5 text-[11px] text-subtle">{o.hint}</span>}
@@ -116,11 +116,11 @@ export function Segmented<T extends string | number>({ value, options, onChange,
   value: T; options: { value: T; label: React.ReactNode; title?: string }[]; onChange: (v: T) => void; size?: 'xs' | 'sm'; className?: string
 }) {
   return (
-    <div className={cn('inline-flex rounded-full border border-line bg-elevated p-0.5', className)}>
+    <div className={cn('inline-flex rounded-md border border-line bg-elevated p-0.5', className)}>
       {options.map((o) => (
         <button key={String(o.value)} title={o.title} onClick={() => onChange(o.value)}
-          className={cn('relative rounded-full font-medium transition-colors', size === 'xs' ? 'px-1.5 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs',
-            value === o.value ? 'bg-brand text-white shadow-sm' : 'text-muted hover:text-fg')}>
+          className={cn('relative rounded-[2px] font-medium transition-colors', size === 'xs' ? 'px-1.5 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs',
+            value === o.value ? 'bg-surface text-fg shadow-[0_0_0_1px_rgb(var(--line))]' : 'text-muted hover:text-fg')}>
           {o.label}
         </button>
       ))}
@@ -134,7 +134,7 @@ export const PopoverTrigger = PopoverP.Trigger
 export function PopoverContent({ className, children, align = 'end' }: { className?: string; children: React.ReactNode; align?: 'start' | 'end' | 'center' }) {
   return (
     <PopoverP.Portal>
-      <PopoverP.Content align={align} sideOffset={6} className={cn('z-50 rounded-xl border border-line bg-elevated p-2 shadow-glow', className)}>
+      <PopoverP.Content align={align} sideOffset={6} className={cn('z-50 rounded-lg border border-line bg-surface p-2 shadow-glow', className)}>
         {children}
       </PopoverP.Content>
     </PopoverP.Portal>
@@ -169,7 +169,7 @@ export function Skeleton({ className }: { className?: string }) {
 export function Empty({ icon, title, children, className }: { icon?: React.ReactNode; title: string; children?: React.ReactNode; className?: string }) {
   return (
     <div className={cn('flex flex-col items-center justify-center gap-2 px-6 py-10 text-center', className)}>
-      {icon && <div className="mb-1 rounded-xl border border-line bg-elevated p-2.5 text-subtle">{icon}</div>}
+      {icon && <div className="mb-1 text-subtle">{icon}</div>}
       <div className="text-sm font-medium text-fg">{title}</div>
       {children && <div className="max-w-sm text-xs leading-relaxed text-muted">{children}</div>}
     </div>
@@ -183,10 +183,10 @@ export function Tabs<T extends string>({ value, onChange, tabs, className, right
     <div className={cn('flex items-center gap-0.5 border-b border-line', className)}>
       {tabs.map((t) => (
         <button key={t.value} onClick={() => onChange(t.value)}
-          className={cn('relative flex items-center gap-1.5 px-2.5 py-2 text-xs font-semibold transition-colors',
-            value === t.value ? 'text-brand dark:text-accent' : 'text-muted hover:text-fg')}>
+          className={cn('relative flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium transition-colors',
+            value === t.value ? 'text-fg' : 'text-muted hover:text-fg')}>
           {t.icon}{t.label}
-          {value === t.value && <span className="absolute inset-x-1.5 -bottom-px h-[3px] rounded-full bg-brand dark:bg-accent" />}
+          {value === t.value && <span className="absolute inset-x-2 -bottom-px h-[2px] bg-brand dark:bg-accent" />}
         </button>
       ))}
       <div className="ml-auto flex items-center gap-1">{right}</div>

@@ -32,9 +32,9 @@ export function QuestionBar() {
   }, [q])
 
   return (
-    <div className="shrink-0 bg-brand px-4 pb-3 pt-1">
+    <div className="shrink-0 border-b border-line bg-surface px-4 py-2.5">
       <div className="flex items-start gap-2.5">
-        <div className={cn('flex min-w-0 flex-1 items-start rounded-[24px] border-2 border-transparent bg-white px-4 py-2 shadow-card transition-colors focus-within:border-white focus-within:shadow-[0_0_0_4px_rgb(255_255_255/0.35)]')}>
+        <div className={cn('flex min-w-0 flex-1 items-start rounded-lg border border-line bg-bg px-3 py-[9px] transition-colors focus-within:border-accent/70 focus-within:bg-surface')}>
           <textarea
             id="question-input"
             ref={ref}
@@ -43,20 +43,18 @@ export function QuestionBar() {
             onChange={(e) => a.setQuestion(e.target.value)}
             // Ctrl/⌘+Enter is handled once, globally (App.useShortcuts)
             placeholder={docId ? 'Ask the style guide anything…' : 'Upload or choose a document first'}
-            className="min-h-[24px] w-full resize-none bg-transparent text-[15px] leading-6 text-[#0f1632] placeholder:text-[#808898] focus:outline-none"
+            className="min-h-[24px] w-full resize-none bg-transparent text-[14px] leading-6 text-fg placeholder:text-subtle focus:outline-none"
           />
         </div>
-        <Button variant="onBrand" size="lg" disabled={!q.trim() || !docId} onClick={() => a.runPanes()} className="h-[44px] gap-2.5 pl-5 pr-1.5 text-[14px] disabled:opacity-60">
+        <Button variant="primary" size="lg" disabled={!q.trim() || !docId} onClick={() => a.runPanes()} className="h-[44px] gap-2 px-4 text-[13px]">
           Run all
-          <span className="rounded bg-brand/10 px-1 font-mono text-[10px] font-medium">{modKey}↵</span>
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white">
-            {anyRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-          </span>
+          {anyRunning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRight className="h-3.5 w-3.5" />}
+          <span className="font-mono text-[10px] font-normal opacity-60">{modKey}↵</span>
         </Button>
-        <div className="flex h-[44px] flex-col justify-center gap-1 text-white">
+        <div className="flex h-[44px] flex-col justify-center gap-1">
           <Tip content="Auto-run: config changes re-run the affected pane (600 ms debounce)">
-            <label className="flex cursor-pointer items-center gap-1.5 text-[11.5px] text-white/90">
-              <Zap className={cn('h-3 w-3', autoRun && 'text-[#ffd34d]')} />Auto-run
+            <label className="flex cursor-pointer items-center gap-1.5 text-[11.5px] text-muted">
+              <Zap className={cn('h-3 w-3', autoRun && 'text-warn')} />Auto-run
               <Switch size="sm" checked={autoRun} onCheckedChange={a.setAutoRun} aria-label="Auto-run" />
             </label>
           </Tip>
@@ -67,7 +65,7 @@ export function QuestionBar() {
         <div className="mt-2 flex flex-wrap gap-1.5">
           {EXAMPLES.map((e) => (
             <button key={e} onClick={() => a.setQuestion(e)}
-              className="rounded-full border border-white/40 bg-white/10 px-3 py-0.5 text-[11.5px] text-white transition-colors hover:bg-white hover:text-brand">{e}</button>
+              className="rounded-md border border-line px-2 py-0.5 text-[11.5px] text-muted transition-colors hover:border-subtle/70 hover:text-fg">{e}</button>
           ))}
         </div>
       )}
@@ -83,7 +81,7 @@ function HistoryButton() {
   return (
     <Popover open={open} onOpenChange={a.setHistoryOpen}>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-1.5 text-[11.5px] text-white/90 hover:text-white"><History className="h-3 w-3" />History</button>
+        <button className="flex items-center gap-1.5 text-[11.5px] text-muted hover:text-fg"><History className="h-3 w-3" />History</button>
       </PopoverTrigger>
       <PopoverContent className="w-[420px] p-1.5">
         <div className="flex items-center px-2 pb-1.5 pt-1">
@@ -95,7 +93,7 @@ function HistoryButton() {
           {!data?.length && <div className="px-2 py-6 text-center text-xs text-subtle">No runs yet. Every “Run all” is saved here.</div>}
           {data?.map((h) => (
             <button key={h.id} onClick={async () => a.loadHistoryRun(await api(`/api/history/${h.id}`))}
-              className="flex w-full flex-col gap-0.5 rounded-lg px-2 py-1.5 text-left hover:bg-accent/10">
+              className="flex w-full flex-col gap-0.5 rounded-md px-2 py-1.5 text-left hover:bg-elevated">
               <span className="truncate text-[12.5px] text-fg">{h.question}</span>
               <span className="flex gap-2 text-[10.5px] text-subtle">
                 <span className="num">{new Date(h.ts * 1000).toLocaleString()}</span><span>{h.doc_name}</span><span>{h.panes.join(' · ')}</span>

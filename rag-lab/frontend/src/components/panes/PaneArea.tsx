@@ -12,8 +12,7 @@ export function PaneArea() {
   useAutoRun()
   const shown = maximized && vis.includes(maximized) ? [maximized] : vis
   return (
-    // pane cards overlap the end of the blue band, like a hero section
-    <div className="h-full bg-[linear-gradient(rgb(var(--brand))_0,rgb(var(--brand))_40px,transparent_40px)] px-3 pb-2">
+    <div className="h-full bg-bg px-3 pb-2 pt-3">
       <Group key={shown.join('')} orientation="horizontal" className="h-full">
         {shown.map((p, i) => (
           <PanelWithSep key={p} pane={p} first={i === 0} size={String(100 / shown.length)} />

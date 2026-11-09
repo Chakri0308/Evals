@@ -38,9 +38,8 @@ export function Pane({ pane }: { pane: PaneId }) {
   return (
     <div className={cn('pane-' + pane, 'flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-line/60 bg-surface shadow-card')}>
       <div className="relative shrink-0">
-        <div className="absolute inset-x-0 top-0 h-[4px] bg-pc" />
         <div className="flex items-center gap-2 px-3 pb-2 pt-3">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-pc text-[11px] font-bold text-white">{pane}</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-md bg-pc-soft text-[11px] font-semibold text-pc">{pane}</span>
           <PaneName pane={pane} name={cfg.name} />
           {!!diff._count && <Tip content={`${diff._count} setting(s) differ from the other panes`}><Badge tone="warn" className="cursor-help">≠ {diff._count}</Badge></Tip>}
           <AnimatePresence>

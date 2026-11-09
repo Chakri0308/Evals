@@ -40,21 +40,20 @@ export function TopBar() {
   }
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 bg-brand px-4 text-white">
+    <header className="flex h-12 shrink-0 items-center gap-3 bg-brand px-4 text-onbrand">
       <div className="flex items-baseline gap-2 pr-1">
-        <span className="text-[19px] font-bold tracking-tight">RAG Lab</span>
-        <span className="font-display-serif hidden text-[15px] text-white/85 xl:inline">find the right answer, side by side</span>
+        <span className="text-[15px] font-semibold tracking-tight">RAG Lab</span>
       </div>
-      <div className="h-6 w-px bg-white/30" />
+      <div className="h-5 w-px bg-white/30" />
       <div className="flex min-w-0 items-center gap-1.5">
         <FileText className="h-3.5 w-3.5 shrink-0 text-white/80" />
-        <Select className="h-8 w-[220px] rounded-full border-white/0 bg-white px-3 text-navy dark:bg-white dark:text-[#0f1632]" value={docId ?? ''} placeholder="Choose a document"
+        <Select className="h-7 w-[220px] border-white/0 bg-white text-navy dark:bg-white dark:text-[rgb(15_22_50)]" value={docId ?? ''} placeholder="Choose a document"
           onChange={(v) => a.setDoc(v)}
           options={(docs ?? []).map((d) => ({ value: d.id, label: d.name, hint: `${d.kind.toUpperCase()} · ${d.tokens.toLocaleString()} tokens` }))} />
         <input ref={fileRef} type="file" accept=".md,.markdown,.pdf,.txt" className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = '' }} />
         <Tip content="Upload a style guide (.md or .pdf)">
-          <Button size="sm" variant="onBrand" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          <Button size="sm" variant="secondary" className="border-white/0 bg-white text-navy hover:bg-white/90 hover:border-white/0 dark:bg-white dark:text-[rgb(15_22_50)]" onClick={() => fileRef.current?.click()} disabled={uploading}>
             {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}Upload
           </Button>
         </Tip>
@@ -76,7 +75,7 @@ export function TopBar() {
         <Tip content="Reset all panes to the default BM25 / Semantic / Hybrid presets">
           <Button size="sm" variant="ghost" className="text-white hover:bg-white/15 hover:text-white" onClick={() => a.resetPanes()}><RotateCcw className="h-3 w-3" />Presets</Button>
         </Tip>
-        <Segmented className="border-white/30 bg-white/15 [&_button]:text-white [&_button.bg-brand]:bg-white [&_button.bg-brand]:!text-brand" value={paneCount} onChange={(v) => a.setPaneCount(v as 1 | 2 | 3)}
+        <Segmented className="border-white/25 bg-white/10 [&_button]:text-white/80 [&_button:hover]:text-white [&_button.bg-surface]:bg-white [&_button.bg-surface]:!text-[rgb(15_22_50)] [&_button.bg-surface]:shadow-none" value={paneCount} onChange={(v) => a.setPaneCount(v as 1 | 2 | 3)}
           options={[
             { value: 1, label: <Square className="h-3 w-3" />, title: '1 pane (Ctrl+1)' },
             { value: 2, label: <Columns2 className="h-3 w-3" />, title: '2 panes (Ctrl+2)' },
@@ -85,7 +84,7 @@ export function TopBar() {
         <Tip content="Sync settings: a change applies to every pane, except the retrieval type and fusion (locked)">
           <label className="flex cursor-pointer items-center gap-1.5 text-xs text-white/90">
             <Link2 className={cn('h-3.5 w-3.5', sync && 'text-white')} />Sync
-            <Switch size="sm" checked={sync} onCheckedChange={a.setSync} aria-label="Sync settings" />
+            <Switch size="sm" className="border-white/40 bg-white/20 data-[state=checked]:border-white data-[state=checked]:bg-white/50" checked={sync} onCheckedChange={a.setSync} aria-label="Sync settings" />
           </label>
         </Tip>
         <Tip content="Toggle theme">
