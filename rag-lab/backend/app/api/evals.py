@@ -34,10 +34,44 @@ async def run_eval(req: EvalReq):
     return stream_job(job)
 
 
+def _summary(r: dict) -> dict:
+    """What the run list needs: identity, settings and the headline metrics per pipeline (not the rows)."""
+    k = r["k"]
+    return {
+        "id": r["id"], "label": r.get("label", ""), "created": r["created"], "doc_id": r.get("doc_id"),
+        "n": len(r["rows"]), "k": k, "duration_s": r.get("duration_s"), "judge": (r.get("judge") or {}).get("component"),
+        "questions": len({x["question_id"] for x in r["rows"]}),
+        "pipelines": [x["name"] for x in r["pipelines"]],
+        "leaderboard": [{key: e.get(key) for key in ("pane", "pipeline", f"recall@{k}", "mrr", "correctness")}
+                        for e in r.get("leaderboard", [])],
+    }
+
+
 @router.get("/evals")
-def evals():
-    return [{"id": r["id"], "created": r["created"], "n": len(r["rows"]), "k": r["k"],
-             "pipelines": [x["name"] for x in r["pipelines"]]} for r in storage.evals.list(limit=30)]
+def evals(doc_id: Optional[str] = None, limit: int = 100):
+    where = (lambda r: r.get("doc_id") == doc_id) if doc_id else None
+    return [_summary(r) for r in storage.evals.list(limit=limit, where=where)]
+
+
+class EvalPatch(BaseModel):
+    label: str = Field("", max_length=120)
+
+
+@router.patch("/evals/{eid}")
+def rename_eval(eid: str, req: EvalPatch):
+    rec = storage.evals.get(eid)
+    if rec is None:
+        raise HTTPException(404)
+    rec["label"] = req.label.strip()
+    storage.evals.put(eid, rec)
+    return _summary(rec)
+
+
+@router.delete("/evals/{eid}")
+def delete_eval(eid: str):
+    if not storage.evals.delete(eid):
+        raise HTTPException(404)
+    return {"ok": True}
 
 
 @router.get("/evals/{eid}")

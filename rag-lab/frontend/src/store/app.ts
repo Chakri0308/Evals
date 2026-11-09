@@ -12,7 +12,7 @@ const PANE_META: Record<PaneId, { color: string }> = {
 /** Settings sync never touches these (they define what each pane is comparing). */
 const LOCKED = new Set(['retrieval.component', 'retrieval.enabled', 'fusion.enabled', 'fusion.component'])
 
-export type BottomTab = 'compare' | 'qgen' | 'eval' | 'document'
+export type BottomTab = 'compare' | 'qgen' | 'eval' | 'annotations' | 'document'
 
 interface Focus { pane: PaneId; chunkId: string; nonce: number }
 

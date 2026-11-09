@@ -1,4 +1,4 @@
-"""Small JSON-file stores (history, presets, question sets, eval runs) under DATA_DIR.
+"""Small JSON-file stores (history, presets, question sets, eval runs, annotations, prompt versions) under DATA_DIR.
 
 One implementation for listing (newest first), reading, writing and deleting, with ids sanitised so a
 request can never escape its folder.
@@ -70,3 +70,5 @@ history = JsonStore("history")
 presets = JsonStore("presets")
 qsets = JsonStore("qsets")
 evals = JsonStore("evals")
+annotations = JsonStore("annotations")
+prompts = JsonStore("prompts")

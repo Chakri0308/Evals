@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
-import { ChevronDown, ChevronUp, FileText, FlaskConical, GitCompare, Loader2, Wand2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, ClipboardCheck, FileText, FlaskConical, GitCompare, Loader2, Wand2 } from 'lucide-react'
 import { useDocs, useRegistry } from '@/api/hooks'
 import { useApp, type BottomTab } from '@/store/app'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,7 @@ import { PaneArea } from '@/components/panes/PaneArea'
 const CompareTab = lazy(() => import('@/components/bottom/CompareTab').then((m) => ({ default: m.CompareTab })))
 const QGenTab = lazy(() => import('@/components/bottom/QGenTab').then((m) => ({ default: m.QGenTab })))
 const EvalTab = lazy(() => import('@/components/bottom/EvalTab').then((m) => ({ default: m.EvalTab })))
+const AnnotationsTab = lazy(() => import('@/components/bottom/AnnotationsTab').then((m) => ({ default: m.AnnotationsTab })))
 const DocumentView = lazy(() => import('@/components/bottom/DocumentView').then((m) => ({ default: m.DocumentView })))
 
 export default function App() {
@@ -80,6 +81,7 @@ function Bottom({ collapsed }: { collapsed?: boolean }) {
           { value: 'compare', label: 'Compare', icon: <GitCompare className="h-3 w-3" /> },
           { value: 'qgen', label: 'Question Generator', icon: <Wand2 className="h-3 w-3" /> },
           { value: 'eval', label: 'Batch Eval', icon: <FlaskConical className="h-3 w-3" /> },
+          { value: 'annotations', label: 'Annotations', icon: <ClipboardCheck className="h-3 w-3" /> },
           { value: 'document', label: 'Document view', icon: <FileText className="h-3 w-3" /> },
         ]}
         right={<button onClick={a.toggleBottom} className="rounded p-1 text-subtle hover:bg-elevated hover:text-fg" title="Toggle panel (Ctrl+B)">{collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}</button>}
@@ -90,6 +92,7 @@ function Bottom({ collapsed }: { collapsed?: boolean }) {
             {tab === 'compare' && <CompareTab />}
             {tab === 'qgen' && <QGenTab />}
             {tab === 'eval' && <EvalTab />}
+            {tab === 'annotations' && <AnnotationsTab />}
             {tab === 'document' && <DocumentView />}
           </Suspense>
         </div>

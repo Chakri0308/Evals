@@ -1,9 +1,10 @@
-import { Fragment, type ReactNode } from 'react'
-import { AlertTriangle, BookX, KeyRound, Quote, ServerOff, Sparkles } from 'lucide-react'
+import { Fragment, useState, type ReactNode } from 'react'
+import { AlertTriangle, BookX, KeyRound, MessageSquare, Quote, ServerOff, Sparkles, ThumbsDown, ThumbsUp } from 'lucide-react'
 import type { PaneId, StageName } from '@/lib/types'
 import { STAGES, STAGE_LABEL } from '@/lib/types'
 import { cn, fmtMs } from '@/lib/utils'
 import { useApp } from '@/store/app'
+import { usePaneAnnotation } from '@/lib/annotations'
 import { Skeleton, Tip } from '@/components/ui'
 
 function renderAnswer(text: string, onCite: (id: string) => void, known: Set<string>): ReactNode[] {
@@ -85,7 +86,42 @@ export function AnswerCard({ pane }: { pane: PaneId }) {
           ))}
         </div>
       )}
+      {res && run.status === 'done' && <ReviewBar pane={pane} />}
       {res && <AnswerFooter pane={pane} />}
+    </div>
+  )
+}
+
+/** Human review: thumbs up/down and a note. Saved per question + pipeline config, listed in the Annotations tab. */
+function ReviewBar({ pane }: { pane: PaneId }) {
+  const { current, save, canAnnotate } = usePaneAnnotation(pane)
+  const verdict = current?.verdict ?? null
+  const [noteOpen, setNoteOpen] = useState(false)
+  const [note, setNote] = useState('')
+  if (!canAnnotate) return null
+  const labelled = Object.keys(current?.chunk_labels ?? {}).length
+  const btn = (on: boolean, tone: 'good' | 'bad') => cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] transition-colors',
+    on ? (tone === 'good' ? 'border-good/50 bg-good/10 text-good' : 'border-bad/50 bg-bad/10 text-bad') : 'border-line text-muted hover:border-subtle/70 hover:text-fg')
+  return (
+    <div className="border-t border-line/70 px-3 py-1.5">
+      <div className="flex items-center gap-1.5">
+        <span className="mr-1 text-[11px] text-subtle">Your review</span>
+        <Tip content="Good answer"><button aria-pressed={verdict === 'up'} className={btn(verdict === 'up', 'good')} onClick={() => save({ verdict: verdict === 'up' ? null : 'up' })}><ThumbsUp className="h-3 w-3" /></button></Tip>
+        <Tip content="Bad answer"><button aria-pressed={verdict === 'down'} className={btn(verdict === 'down', 'bad')} onClick={() => save({ verdict: verdict === 'down' ? null : 'down' })}><ThumbsDown className="h-3 w-3" /></button></Tip>
+        <button onClick={() => { if (!noteOpen) setNote(current?.note ?? ''); setNoteOpen(!noteOpen) }}
+          className={cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] transition-colors',
+            noteOpen || current?.note ? 'border-subtle/60 bg-elevated text-fg' : 'border-line text-muted hover:border-subtle/70 hover:text-fg')}>
+          <MessageSquare className="h-3 w-3" />{current?.note ? 'Note' : 'Add note'}
+        </button>
+        <span className="ml-auto text-[10.5px] text-subtle">
+          {labelled ? `${labelled} chunk${labelled > 1 ? 's' : ''} labelled · ` : ''}mark chunks relevant below
+        </span>
+      </div>
+      {noteOpen && (
+        <textarea value={note} onChange={(e) => setNote(e.target.value)} onBlur={() => note !== (current?.note ?? '') && save({ note })}
+          rows={2} placeholder="What's wrong or right about this answer? (saved when you click away)"
+          className="mt-1.5 w-full resize-y rounded-md border border-line bg-bg px-2 py-1 text-[12px] text-fg placeholder:text-subtle focus:border-accent/70 focus:outline-none" />
+      )}
     </div>
   )
 }

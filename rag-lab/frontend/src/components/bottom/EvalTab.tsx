@@ -1,11 +1,15 @@
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { BarChart3, Download, FlaskConical, Loader2, Play, Trophy } from 'lucide-react'
 import { sse } from '@/api/client'
 import { useCategories } from '@/api/hooks'
 import { LlmPicker, type LlmChoice } from '@/components/common/LlmPicker'
 import { useApp, visiblePanes } from '@/store/app'
 import { download, useQSet } from '@/store/qset'
-import type { PaneId } from '@/lib/types'
+import type { PaneId, PipelineConfig } from '@/lib/types'
+import { PANE_IDS } from '@/lib/types'
+import { usePromptVersions, withPrompt } from '@/lib/prompts'
+import { RunsView } from './EvalRuns'
 import { cn, fmtMs } from '@/lib/utils'
 import { Badge, Button, Empty, Segmented, Select, Switch, Tip } from '@/components/ui'
 
@@ -30,22 +34,36 @@ export function EvalTab() {
   const [prog, setProg] = useState<{ done: number; total: number; last?: string } | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [metric, setMetric] = useState<string>('recall')
+  const [view, setView] = useState<'result' | 'runs'>('result')
+  // what to evaluate: the visible panes as they are, or one pane's pipeline with different saved prompt versions
+  const [mode, setMode] = useState<'panes' | 'prompts'>('panes')
+  const [basePane, setBasePane] = useState<PaneId>('A')
+  const [selVersions, setSelVersions] = useState<string[]>([])
+  const { data: versions } = usePromptVersions()
+  const qc = useQueryClient()
+  const base = vis.includes(basePane) ? basePane : vis[0]
+  const pipelines: PipelineConfig[] = mode === 'panes'
+    ? vis.map((p) => panes[p])
+    : (versions ?? []).filter((v) => selVersions.includes(v.id)).slice(0, 3).map((v, i) => ({
+      ...withPrompt(panes[base], v), id: PANE_IDS[i], name: `${panes[base].name} · ${v.name}`,
+    }))
+  const toggleVersion = (id: string) => setSelVersions(selVersions.includes(id) ? selVersions.filter((x) => x !== id) : selVersions.length < 3 ? [...selVersions, id] : selVersions)
 
   const subset = items.filter((q) => !selCats.length || selCats.includes(q.category))
   const presentCats = [...new Set(items.map((q) => q.category))]
   const catLabel = (id: string) => cats?.find((c) => c.id === id)?.label ?? id
 
   const run = async () => {
-    if (!docId || !subset.length) return
+    if (!docId || !subset.length || !pipelines.length) return
     setErr(null)
-    setProg({ done: 0, total: subset.length * vis.length })
+    setProg({ done: 0, total: subset.length * pipelines.length })
     try {
       await sse('/api/eval', {
-        doc_id: docId, questions: subset, pipelines: vis.map((p) => panes[p]), k, generate_answers: answers,
+        doc_id: docId, questions: subset, pipelines, k, generate_answers: answers,
         judge: judge === 'llm' ? { component: 'llm', params: { provider: judgeLlm.provider, model: judgeLlm.model } } : { component: 'heuristic', params: {} },
       }, (ev, d) => {
         if (ev === 'progress') setProg({ done: d.done, total: d.total, last: d.row?.question })
-        if (ev === 'result') setEval(d)
+        if (ev === 'result') { setEval(d); setView('result'); qc.invalidateQueries({ queryKey: ['evals', docId] }) }
         if (ev === 'fatal') setErr(d.message)
       })
     } catch (e: any) { setErr(e.message) } finally { setProg(null) }
@@ -70,6 +88,29 @@ export function EvalTab() {
               </div>
               {!!selCats.length && <button onClick={() => setSelCats([])} className="mt-1 text-[11px] text-subtle hover:text-fg">clear filter (use all)</button>}
             </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-muted">Evaluate
+                <Segmented size="xs" value={mode} onChange={setMode} options={[{ value: 'panes', label: 'Panes' }, { value: 'prompts', label: 'Prompt versions' }]} />
+              </div>
+              {mode === 'prompts' && (
+                !versions?.length ? (
+                  <div className="rounded-lg border border-dashed border-line p-2 text-[11px] leading-snug text-muted">No saved prompt versions. Open a pane's <b>Prompt</b> stage and click <b>Save</b> to create some.</div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11.5px] text-muted">Pipeline from pane
+                      <Select className="w-[130px]" value={base} onChange={(v) => setBasePane(v as PaneId)} options={vis.map((p) => ({ value: p, label: `${p} · ${panes[p].name}` }))} />
+                    </div>
+                    <div className="text-[11px] text-subtle">Pick up to 3 versions: everything else stays the same as pane {base}.</div>
+                    <div className="flex flex-wrap gap-1">
+                      {versions.map((v) => (
+                        <button key={v.id} title={v.note} onClick={() => toggleVersion(v.id)} disabled={!selVersions.includes(v.id) && selVersions.length >= 3}
+                          className={cn('rounded-md border px-2 py-0.5 text-[11px] disabled:opacity-40', selVersions.includes(v.id) ? 'border-accent/60 bg-accent/10 text-fg' : 'border-line text-muted hover:text-fg')}>{v.name}</button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
             <div className="flex items-center justify-between text-xs text-muted">k for @k metrics <Segmented size="xs" value={k} onChange={setK} options={[3, 5, 10].map((v) => ({ value: v, label: String(v) }))} /></div>
             <div className="flex items-center justify-between text-xs text-muted">Generate + judge answers <Switch size="sm" checked={answers} onCheckedChange={setAnswers} /></div>
             {answers && (
@@ -83,9 +124,9 @@ export function EvalTab() {
                 </Tip>
               </div>
             )}
-            <Button variant="primary" className="w-full" disabled={!!prog || !subset.length} onClick={run}>
+            <Button variant="primary" className="w-full" disabled={!!prog || !subset.length || !pipelines.length} onClick={run}>
               {prog ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FlaskConical className="h-3.5 w-3.5" />}
-              {prog ? `Running ${prog.done}/${prog.total}` : `Evaluate ${vis.length} config${vis.length > 1 ? 's' : ''}`}
+              {prog ? `Running ${prog.done}/${prog.total}` : mode === 'prompts' ? (pipelines.length ? `Evaluate ${pipelines.length} prompt version${pipelines.length > 1 ? 's' : ''}` : 'Pick prompt versions') : `Evaluate ${vis.length} config${vis.length > 1 ? 's' : ''}`}
             </Button>
             {prog && (
               <div>
@@ -99,7 +140,13 @@ export function EvalTab() {
         )}
       </aside>
       <div className="min-w-0 flex-1 overflow-y-auto p-3">
-        {!result ? (
+        <div className="mb-3 flex items-center gap-2">
+          <Segmented size="xs" value={view} onChange={setView} options={[{ value: 'result', label: 'Current result' }, { value: 'runs', label: 'Saved runs & compare' }]} />
+          {view === 'result' && result?.label && <span className="text-[11.5px] text-muted">{result.label}</span>}
+        </div>
+        {view === 'runs' ? (
+          <RunsView docId={docId} onOpen={(rec) => { setEval(rec); setView('result') }} />
+        ) : !result ? (
           <Empty icon={<BarChart3 className="h-4 w-4" />} title="No results yet">Run an evaluation to see the leaderboard, a per-category breakdown of where each retrieval strategy fails, and per-question drill-downs.</Empty>
         ) : (
           <Results r={result} metric={metric} setMetric={setMetric} catLabel={catLabel} />

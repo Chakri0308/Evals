@@ -1,11 +1,15 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { X } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { History, Save, Trash2, X } from 'lucide-react'
+import { del, post } from '@/api/client'
+import { matchingVersion, usePromptVersions, withPrompt } from '@/lib/prompts'
 import type { PaneId, StageName } from '@/lib/types'
 import { STAGE_LABEL } from '@/lib/types'
 import { effectiveParams, findComponent, fmtMs } from '@/lib/utils'
 import { useApp } from '@/store/app'
 import { useSuggestions } from '@/api/hooks'
-import { Badge, Button, Select, Switch } from '@/components/ui'
+import { Badge, Button, Popover, PopoverContent, PopoverTrigger, Select, Switch, Tip } from '@/components/ui'
 import { SchemaForm } from '@/components/schema/SchemaForm'
 import { DiffBadge } from '@/components/schema/DiffBadge'
 import { JsonBlock } from '@/components/common/JsonView'
@@ -57,6 +61,7 @@ export function ConfigDrawer({ pane, stage, diff }: { pane: PaneId; stage: Stage
           {d?.component && <DiffBadge title={d.component} />}
         </div>
         {comp?.description && <p className="mb-3 text-[11.5px] leading-relaxed text-muted">{comp.description}</p>}
+        {stage === 'prompt' && <PromptVersions pane={pane} />}
         <div className={sc.enabled ? '' : 'pointer-events-none opacity-50'}>
           <SchemaForm schema={comp?.schema} values={values} explicit={sc.params} diff={d?.params} suggestions={sugg}
             onChange={(k, v) => a.setParam(pane, stage, k, v)} onReset={(k) => a.resetParam(pane, stage, k)} />
@@ -71,5 +76,67 @@ export function ConfigDrawer({ pane, stage, diff }: { pane: PaneId; stage: Stage
         )}
       </div>
     </motion.div>
+  )
+}
+
+/** Named prompt versions: load one into this pane, save the current prompt as a version, or update/delete one. */
+function PromptVersions({ pane }: { pane: PaneId }) {
+  const reg = useApp((s) => s.registry)
+  const cfg = useApp((s) => s.panes[pane])
+  const qc = useQueryClient()
+  const { data: versions } = usePromptVersions()
+  const match = matchingVersion(reg, cfg, versions)
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [note, setNote] = useState('')
+  const [err, setErr] = useState<string | null>(null)
+
+  const load = (id: string) => {
+    const v = versions?.find((x) => x.id === id)
+    if (v) useApp.getState().replacePane(pane, withPrompt(useApp.getState().panes[pane], v))
+  }
+  const save = async (n: string, nt: string) => {
+    setErr(null)
+    try {
+      const sc = useApp.getState().panes[pane].stages.prompt
+      await post('/api/prompts', { name: n, note: nt, component: sc.component, params: effectiveParams(reg, 'prompt', sc.component, sc.params) })
+      await qc.invalidateQueries({ queryKey: ['prompts'] })
+      setOpen(false); setName(''); setNote('')
+    } catch (e: any) { setErr(e.message) }
+  }
+  const remove = async (id: string) => {
+    await del(`/api/prompts/${encodeURIComponent(id)}`)
+    qc.invalidateQueries({ queryKey: ['prompts'] })
+  }
+
+  return (
+    <div className="mb-3 rounded-lg border border-line bg-bg/60 p-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <History className="h-3 w-3 text-subtle" />
+        <span className="text-[11.5px] font-medium text-muted">Prompt version</span>
+        {match ? <Badge tone="accent">{match.name}</Badge> : <Badge>{versions?.length ? 'unsaved changes' : 'none saved'}</Badge>}
+        <div className="ml-auto flex items-center gap-1">
+          {!!versions?.length && (
+            <Select className="w-[150px]" value={match?.id ?? ''} placeholder="Load version…" onChange={load}
+              options={versions.map((v) => ({ value: v.id, label: v.name, hint: v.note || new Date(v.updated * 1000).toLocaleString() }))} />
+          )}
+          <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) { setName(match?.name ?? ''); setNote(match?.note ?? '') } }}>
+            <PopoverTrigger asChild><Button size="sm" variant="secondary"><Save className="h-3 w-3" />Save</Button></PopoverTrigger>
+            <PopoverContent className="w-[280px] space-y-2 p-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-subtle">Save prompt version</div>
+              <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Name, e.g. v2-concise" maxLength={80}
+                className="h-7 w-full rounded-md border border-line bg-surface px-2 text-[12px] focus:border-accent/70 focus:outline-none" />
+              <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What changed? (optional)" rows={2} maxLength={500}
+                className="w-full resize-none rounded-md border border-line bg-surface px-2 py-1 text-[12px] focus:border-accent/70 focus:outline-none" />
+              {versions?.some((v) => v.name === name.trim()) && <div className="text-[11px] text-warn">Overwrites the existing “{name.trim()}”.</div>}
+              {err && <div className="text-[11px] text-bad">{err}</div>}
+              <Button size="sm" variant="primary" className="w-full" disabled={!name.trim()} onClick={() => save(name.trim(), note)}>Save</Button>
+            </PopoverContent>
+          </Popover>
+          {match && <Tip content={`Delete version “${match.name}”`}><Button size="iconSm" variant="ghost" onClick={() => remove(match.id)}><Trash2 className="h-3 w-3" /></Button></Tip>}
+        </div>
+      </div>
+      {match?.note && <div className="mt-1 text-[11px] text-subtle">{match.note}</div>}
+    </div>
   )
 }

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowDown, ArrowUp, CheckCircle2, ChevronDown, FileSearch, Minus, Quote } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, CheckCircle2, ChevronDown, FileSearch, Minus, Quote, X } from 'lucide-react'
 import type { Chunk, Hit, PaneId } from '@/lib/types'
 import { cn, fmtScore, locationLabel } from '@/lib/utils'
 import { Prose } from '@/lib/highlight'
 import { useApp } from '@/store/app'
+import { usePaneAnnotation, type Relevance } from '@/lib/annotations'
 import { Badge, Tip } from '@/components/ui'
 
 const SCORE_META: Record<string, { label: string; tip: string }> = {
@@ -89,11 +90,31 @@ export function ChunkCard({ pane, hit, chunk, rank, terms, cited, dropped }: {
             </button>
           )}
           {cited && <span className="flex items-center gap-1 text-[11px] text-pc"><CheckCircle2 className="h-3 w-3" />used in answer</span>}
+          {!dropped && <RelevanceToggle pane={pane} chunkId={hit.chunk_id} />}
           <button onClick={() => showInDoc(pane, hit.chunk_id)} className="ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-muted hover:bg-elevated hover:text-fg">
             <FileSearch className="h-3 w-3" />Show in document
           </button>
         </div>
       </div>
     </motion.div>
+  )
+}
+
+/** Human relevance label for this chunk (feeds gold questions and judge-agreement in the Annotations tab). */
+function RelevanceToggle({ pane, chunkId }: { pane: PaneId; chunkId: string }) {
+  const { current, save, canAnnotate } = usePaneAnnotation(pane)
+  if (!canAnnotate) return null
+  const label = current?.chunk_labels?.[chunkId]
+  const set = (v: Relevance) => {
+    const { [chunkId]: _old, ...rest } = current?.chunk_labels ?? {}
+    save({ chunk_labels: label === v ? rest : { ...rest, [chunkId]: v } })
+  }
+  const cls = (on: boolean, tone: string) => cn('flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition-colors',
+    on ? tone : 'text-muted hover:bg-elevated hover:text-fg')
+  return (
+    <div className="flex items-center gap-0.5">
+      <Tip content="Mark as relevant: it contains the answer"><button aria-pressed={label === 'relevant'} onClick={() => set('relevant')} className={cls(label === 'relevant', 'bg-good/10 text-good')}><Check className="h-3 w-3" />Relevant</button></Tip>
+      <Tip content="Mark as not relevant"><button aria-pressed={label === 'irrelevant'} onClick={() => set('irrelevant')} className={cls(label === 'irrelevant', 'bg-bad/10 text-bad')}><X className="h-3 w-3" />Not relevant</button></Tip>
+    </div>
   )
 }
